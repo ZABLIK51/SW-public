@@ -49,7 +49,7 @@
   alias:
   - medievalmyrmex
   name: medieval-plague-title
-  showInVote: true
+  showInVote: false
   description: medieval-plague-description
   rules:
   - TDM
