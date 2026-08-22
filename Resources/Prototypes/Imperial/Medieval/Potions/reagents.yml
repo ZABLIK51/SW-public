@@ -516,8 +516,8 @@
     Narcotic:
       effects:
       - !type:MovespeedModifier
-        walkSpeedModifier: 1.6
-        sprintSpeedModifier: 1.6
+        walkSpeedModifier: 1.3
+        sprintSpeedModifier: 1.3
     Poison:
       effects:
       - !type:Jitter
@@ -1365,8 +1365,8 @@
     Narcotic:
       effects:
       - !type:MovespeedModifier
-        walkSpeedModifier: 2.1
-        sprintSpeedModifier: 2.1
+        walkSpeedModifier: 1.6
+        sprintSpeedModifier: 1.6
     Poison:
       effects:
       - !type:Jitter
@@ -1863,8 +1863,8 @@
         component: StutteringAccent
       - !type:Jitter
       - !type:MovespeedModifier
-        walkSpeedModifier: 2
-        sprintSpeedModifier: 2
+        walkSpeedModifier: 1.6
+        sprintSpeedModifier: 1.6
       - !type:GenericStatusEffect
         key: Stun
         time: 8
