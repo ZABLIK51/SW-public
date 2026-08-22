@@ -170,8 +170,8 @@
   - type: HumanoidAppearance
     species: Zveres
   - type: Mana
-    maxManaRaceModifier: 1.1
-    regenRaceModifier: 1.1
+    maxManaRaceModifier: 0.9
+    regenRaceModifier: 0.9
   - type: MedievalZveresHeat
   - type: ZveresAccent
   - type: Inventory
