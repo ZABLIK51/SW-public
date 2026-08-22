@@ -46,11 +46,11 @@
       - !type:HealthChange
         damage:
           types:
-            Heat: -6
-            Shock: -4
-            Cold: -3
+            Heat: -30
+            Shock: -20
+            Cold: -15
           groups:
-            Brute: -3
+            Brute: -7
       - !type:ProgressPlague
         progressAmount: -10
         curePower: 10
@@ -90,8 +90,8 @@
       - !type:HealthChange
         damage:
           types:
-            Asphyxiation: -4
-            Bloodloss: -4
+            Asphyxiation: -10
+            Bloodloss: -10
           groups:
             Brute: -6
       - !type:ProgressPlague
@@ -233,7 +233,7 @@
       - !type:HealthChange
         damage:
           groups:
-            Brute: -9
+            Brute: -20
       - !type:ProgressPlague
         progressAmount: -15
         curePower: 10
@@ -677,9 +677,9 @@
       - !type:HealthChange
         damage:
           types:
-            Slash: -3
+            Slash: -15
           groups:
-            Brute: -4.5
+            Brute: -15
       - !type:ProgressPlague
         progressAmount: -8
         curePower: 10
@@ -719,9 +719,9 @@
       - !type:HealthChange
         damage:
           types:
-            Piercing: -3
+            Piercing: -15
           groups:
-            Brute: -4.5
+            Brute: -15
       - !type:ProgressPlague
         progressAmount: -8
         curePower: 10
@@ -761,9 +761,9 @@
       - !type:HealthChange
         damage:
           types:
-            Blunt: -3
+            Blunt: -15
           groups:
-            Brute: -4.5
+            Brute: -15
       - !type:ProgressPlague
         progressAmount: -8
         curePower: 10
@@ -1023,9 +1023,9 @@
       - !type:HealthChange
         damage:
           types:
-            Bloodloss: -15
+            Bloodloss: -30
           groups:
-            Brute: -4.5
+            Brute: -6
       - !type:ModifyBleedAmount
         amount: -5
       - !type:ProgressPlague
@@ -1096,10 +1096,10 @@
       - !type:HealthChange
         damage:
           groups:
-            Burn: -8
-            Toxin: -8
-            Airloss: -8
-            Brute: -8
+            Burn: -25
+            Toxin: -25
+            Airloss: -25
+            Brute: -25
       - !type:ProgressPlague
         progressAmount: -30
         curePower: 30
@@ -1140,9 +1140,9 @@
       - !type:HealthChange
         damage:
           types:
-            Slash: -9
+            Slash: -30
           groups:
-            Brute: -9
+            Brute: -30
       - !type:ProgressPlague
         progressAmount: -20
         curePower: 20
@@ -1182,9 +1182,9 @@
       - !type:HealthChange
         damage:
           types:
-            Piercing: -9
+            Piercing: -30
           groups:
-            Brute: -9
+            Brute: -30
       - !type:ProgressPlague
         progressAmount: -20
         curePower: 20
@@ -1224,9 +1224,9 @@
       - !type:HealthChange
         damage:
           types:
-            Blunt: -9
+            Blunt: -30
           groups:
-            Brute: -9
+            Brute: -30
       - !type:ProgressPlague
         progressAmount: -20
         curePower: 20
@@ -1266,11 +1266,11 @@
       - !type:HealthChange
         damage:
           types:
-            Heat: -9
-            Shock: -9
-            Cold: -9
+            Heat: -30
+            Shock: -30
+            Cold: -30
           groups:
-            Brute: -6
+            Brute: -12
       - !type:ProgressPlague
         progressAmount: -20
         curePower: 20
@@ -1516,9 +1516,9 @@
       - !type:HealthChange
         damage:
           types:
-            Bloodloss: -20
+            Bloodloss: -50
           groups:
-            Brute: -9
+            Brute: -12
       - !type:ModifyBleedAmount
         amount: -10
       - !type:ProgressPlague
@@ -1594,7 +1594,7 @@
         - !type:HealthChange
           damage: # heals at the same rate as tricordrazine, doesn't heal poison because if you OD'd I'm not giving you a safety net
             groups:
-              Brute: -4.5
+              Brute: -7
     Poison:
       effects:
       - !type:Jitter
@@ -1768,13 +1768,13 @@
       - !type:HealthChange
         damage:
           types:
-            Cellular: -20
-            Bloodloss: -20
+            Cellular: -60
+            Bloodloss: -60
           groups:
-            Burn: -30
-            Toxin: -30
-            Airloss: -30
-            Brute: -30
+            Burn: -60
+            Toxin: -60
+            Airloss: -60
+            Brute: -60
       - !type:ProgressPlague
         progressAmount: -20
         curePower: 40
