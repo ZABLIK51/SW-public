@@ -57,8 +57,6 @@
   - medievalexplosion
   - medievalhealburn
   - medievalhealbloodandoxygen
-  - medievalacid
-  - medievalradiation
   - medievaldrughealmech
   - medievalvomit
   - medievalAmmonia
@@ -103,7 +101,7 @@
   - "#ffffff"
   - "#3d3d3d"
   recipeCount: 2
-  potionCount: 26
+  potionCount: 24
 
 - type: chemRandom
   id: MediumPack
@@ -114,8 +112,9 @@
   - medievaladvancedhealpiercing
   - medievaladvancedhealblunt
   - medievaladvancedhealburn
-  - medievaladvancedacidradiation
   - medievaladvancedfast
+  - medievalacid
+  - medievalradiation
   - medievaladvancedslow
   - medievaladvancedpacifism
   - medievaladvancedteleport
@@ -160,6 +159,7 @@
   - medievalbestheal
   - medievalbestpoison
   - medievalbeststimulant
+  - medievaladvancedacidradiation
   reactants: 1
   potionCount: 2
   priority: 3
