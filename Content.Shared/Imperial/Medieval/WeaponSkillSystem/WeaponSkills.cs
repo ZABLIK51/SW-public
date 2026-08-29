@@ -82,14 +82,7 @@ public sealed partial class CrossbowSkillComponent : Component
 {
     [DataField("staminaOnHit")] public float StaminaOnHit = 35f;
 }
-
-[RegisterComponent, NetworkedComponent]
-public sealed partial class CrossbowHeavyComponent : Component
-{
-    [DataField("bypassType")] public string BypassType = "Piercing";
-    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 35f;
-}
-
+    
 [RegisterComponent, NetworkedComponent]
 public sealed partial class BowSkillComponent : Component { }
 
