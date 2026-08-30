@@ -41,7 +41,7 @@
   - type: TrashClear
     safe: true
   - type: Item
-    size: Normal
+    size: Large
   - type: MedievalWeaponSkillCategory
     skill: Crossbow
 
@@ -810,8 +810,8 @@
     sprintModifier: 0.75
     mirrorClothingModifier: false
   - type: SpeedModifiedOnWield
-    walkModifier: 0.666 # Imperial balance
-    sprintModifier: 0.666 # Imperial balance
+    walkModifier: 0.2 
+    sprintModifier: 0.2 
   - type: CursorOffsetRequiresWield
   - type: EyeCursorOffset
     maxOffset: 1
@@ -819,7 +819,7 @@
   - type: TrashClear
     safe: true
   - type: Item
-    size: Large
+    size: Huge
  # - type: MedievalWeaponSkillCategory
  #   skill: CrossbowHeavy
 

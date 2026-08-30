@@ -125,7 +125,7 @@ public sealed class WeaponSkillSystem : EntitySystem
         ev = ev with
         {
             StaminaDamage = ev.StaminaDamage + comp.StaminaOnHit,
-            BypassDamage = AddDamage(ev.BypassDamage, comp.BypassType, comp.BypassAmount),
+            //BypassDamage = AddDamage(ev.BypassDamage, comp.BypassType, comp.BypassAmount),
         };
     }
 
