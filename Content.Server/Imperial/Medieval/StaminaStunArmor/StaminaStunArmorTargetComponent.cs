@@ -18,6 +18,6 @@ public sealed partial class StaminaStunArmorTargetComponent : Component
     public TimeSpan ComboWindow = TimeSpan.FromMinutes(1);
 
     [DataField]
-    public float EfficiencyDropPerCombo = 0.33f;
+    public float EfficiencyDropPerCombo = 0.25f;
 }
 
