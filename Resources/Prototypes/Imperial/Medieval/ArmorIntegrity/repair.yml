@@ -16,7 +16,7 @@
     repairAmount: 20
     isSpendable: false
     repairTime: 5
-    maxArmorRemove: 1
+    maxArmorRemove: 10
     skilledCrafterMaxArmorRemovalModifier: 0.5
     useSound:
       path: /Audio/Imperial/Medieval/craft_cloth.ogg
@@ -34,10 +34,10 @@
     size: Tiny
   - type: MedievalRepairArmor
     repairType: Sewing
-    repairAmount: 60
+    repairAmount: 80
     isSpendable: true
     repairTime: 14
-    maxArmorRemove: 0
+    maxArmorRemove: 2
     skilledCrafterMaxArmorRemovalModifier: 0.5
     useSound:
       path: /Audio/Imperial/Medieval/craft_cloth.ogg
@@ -65,10 +65,10 @@
     size: Tiny
   - type: MedievalRepairArmor
     repairType: Smithing
-    repairAmount: 100
+    repairAmount: 80
     isSpendable: true
     repairTime: 14
-    maxArmorRemove: 0
+    maxArmorRemove: 2
     skilledCrafterMaxArmorRemovalModifier: 0.5
     useSound:
       path: /Audio/Imperial/Medieval/craft_iron.ogg
@@ -98,10 +98,10 @@
     size: Tiny
   - type: MedievalRepairArmor
     repairType: Sewing
-    repairAmount: 45
+    repairAmount: 50
     isSpendable: true
     repairTime: 4
-    maxArmorRemove: 4
+    maxArmorRemove: 5
     skilledCrafterMaxArmorRemovalModifier: 0.5
     useSound:
       path: /Audio/Imperial/Medieval/craft_cloth.ogg
@@ -129,7 +129,7 @@
     size: Tiny
   - type: MedievalRepairArmor
     repairType: Smithing
-    repairAmount: 60
+    repairAmount: 50
     isSpendable: true
     repairTime: 5
     maxArmorRemove: 5

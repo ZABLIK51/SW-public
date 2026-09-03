@@ -13,10 +13,10 @@
   components:
   - type: MedievalRepairArmor
     repairType: Smithing
-    repairAmount: 30
+    repairAmount: 20
     isSpendable: false
-    repairTime: 7
-    maxArmorRemove: 1
+    repairTime: 5
+    maxArmorRemove: 10
     skilledCrafterMaxArmorRemovalModifier: 0.5
     useSound:
       path: /Audio/Imperial/Medieval/craft_iron.ogg
