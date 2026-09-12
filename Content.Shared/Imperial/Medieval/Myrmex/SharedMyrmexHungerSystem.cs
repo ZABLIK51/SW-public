@@ -1,9 +1,12 @@
-﻿using Content.Shared.Alert;
+using Content.Shared.Actions.Events;
+using Content.Shared.Alert;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Events;
 using Content.Shared.Examine;
 using Content.Shared.Imperial.Dash;
 using Content.Shared.Imperial.Medieval.Sprint;
+using Content.Shared.Interaction.Events;
+using Content.Shared.Mobs.Components;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Projectiles;
 using Content.Shared.Weapons.Melee.Events;
@@ -34,6 +37,25 @@ namespace Content.Shared.Imperial.Medieval.Myrmex
             SubscribeLocalEvent<MyrmexHungerComponent, GunShotEvent>(OnGunShot);
             SubscribeLocalEvent<MyrmexHungerComponent, DamageModifyEvent>(OnGetDamageModifiers);
             SubscribeLocalEvent<MyrmexHungerComponent, ExaminedEvent>(OnExamined);
+
+            // imperial medieval - myrmex - myrmex never attach each other, client-predicted
+            SubscribeLocalEvent<MyrmexHungerComponent, AttackAttemptEvent>(OnMyrmexAttackAttempt);
+            SubscribeLocalEvent<MyrmexHungerComponent, DisarmAttemptEvent>(OnMyrmexDisarmAttempt);
+        }
+
+        private bool IsMyrmex(EntityUid uid) => HasComp<MyrmexHungerComponent>(uid);
+
+        private void OnMyrmexAttackAttempt(EntityUid uid, MyrmexHungerComponent comp, AttackAttemptEvent args)
+        {
+            if (args.Target is { } target && IsMyrmex(target))
+                args.Cancel();
+        }
+        
+        
+        private void OnMyrmexDisarmAttempt(EntityUid uid, MyrmexHungerComponent comp, ref DisarmAttemptEvent args)
+        {
+            if (IsMyrmex(args.DisarmerUid) && IsMyrmex(args.TargetUid))
+               args.Cancelled = true;
         }
 
         private void OnInit(EntityUid uid, MyrmexHungerComponent comp, ref ComponentInit args)
@@ -64,6 +86,10 @@ namespace Content.Shared.Imperial.Medieval.Myrmex
 
         private void OnExamined(EntityUid uid, MyrmexHungerComponent comp, ref ExaminedEvent args)
         {
+            // imperial medieval - only living myrmex show buff stats, not myrmex-owned structures like the turret
+            if (!HasComp<MobStateComponent>(uid))
+                return;
+                
             var buff = MyrmexBuff.MultiplyBuffs(comp.Buffs);
             args.PushMarkup(Loc.GetString("medieval-myrmex-buff-health-examine", ("value", Math.Round(buff.Health, 2))));
             args.PushMarkup(Loc.GetString("medieval-myrmex-buff-damage-examine", ("value", Math.Round(buff.Damage, 2))));

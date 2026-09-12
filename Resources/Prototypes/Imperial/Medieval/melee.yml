@@ -5069,10 +5069,8 @@
   - type: Tag
     tags:
       - HideContextMenu
-  - type: EmitSoundOnSpawn
-    sound:
-      collection: MeleeParryWindow
   - type: MeleeParryEffect
+    phaseControlled: true
 
 - type: entity
   id: MedievalEffectSuccessParry

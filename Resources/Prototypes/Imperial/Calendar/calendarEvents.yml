@@ -1,0 +1,127 @@
+# Базовый дневной фоллбэк
+- type: calendarEvent
+  id: DefaultCalendarEvent
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/sun.png"
+  name: calendar-event-default-name
+  text: calendar-event-default-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+
+# Базовый ночной фоллбэк
+- type: calendarEvent
+  id: DefaultCalendarNightEvent
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/moon.png"
+  name: calendar-event-default-night-name
+  text: calendar-event-default-night-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+
+# ==============================================================================
+# ДНЕВНЫЕ СОБЫТИЯ (Тег: Day)
+# ==============================================================================
+
+# 1. Обычный ясный день
+- type: calendarEvent
+  id: CalendarEventSunnyDay
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/sun.png"
+  name: calendar-event-sunny-name
+  text: calendar-event-sunny-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+  weight: 20.0
+  minDay: 1
+  minOffset: 2
+  tags:
+    - Day
+
+# 2. Дождливый пасмурный день
+- type: calendarEvent
+  id: CalendarEventRainyDay
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/sun.png"
+  name: calendar-event-rain-name
+  text: calendar-event-rain-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+  weight: 0.0
+  minDay: 1
+  minOffset: 2
+  tags:
+    - Day
+
+# 3. Торговая ярмарка
+- type: calendarEvent
+  id: CalendarEventFairDay
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/sun.png"
+  name: calendar-event-fair-name
+  text: calendar-event-fair-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+  weight: 100.5
+  minDay: 3
+  maxOccurrences: 1
+  minOffset: 2
+  tags:
+    - Day
+    - TradeEvent
+
+# 4. Солнечное затмение
+- type: calendarEvent
+  id: CalendarEventEclipseDay
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/sun.png"
+  name: calendar-event-eclipse-name
+  text: calendar-event-eclipse-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+  weight: 0.1
+  minDay: 7
+  maxOccurrences: 1
+  tags:
+    - Day
+    - Omen
+
+# ==============================================================================
+# НОЧНЫЕ СОБЫТИЯ (Тег: Night)
+# ==============================================================================
+
+# 5. Тихая ясная ночь
+- type: calendarEvent
+  id: CalendarEventClearNight
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/moon.png"
+  name: calendar-event-clear-night-name
+  text: calendar-event-clear-night-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+  weight: 20.0
+  minDay: 1
+  minOffset: 1
+  tags:
+    - Night
+
+# 6. Туманная ночь
+- type: calendarEvent
+  id: CalendarEventFoggyNight
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/moon.png"
+  name: calendar-event-fog-night-name
+  text: calendar-event-fog-night-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+  weight: 0.0
+  minDay: 2
+  maxOccurrences: 4
+  minOffset: 4
+  tags:
+    - Night
+
+# 7. Кровавая луна   Она должна задаваться кодом системы ликантропии. Сначала система календаря заполняет календарь, а потом система ликантроии при запуске раунда должна заменить седьмую ночь на эту
+- type: calendarEvent
+  id: CalendarEventBloodMoonNight
+  texture: "/Textures/Imperial/Medieval/Calendar/indicators/moon.png"
+  name: calendar-event-blood-moon-name
+  text: calendar-event-blood-moon-desc
+  sound:
+    path: "/Audio/Effects/church_bell1.ogg"
+  weight: 1.0
+  minDay: 5
+  maxOccurrences: 1
+  tags:
+    - BloodMoon

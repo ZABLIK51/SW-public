@@ -56,7 +56,7 @@
   components:
   - type: MyrmexStew
     buff:
-      damage: 1.05
+      damage: 1.02
       health: 1.02
       stamina: 0.98
   - type: Sprite
