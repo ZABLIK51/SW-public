@@ -5412,8 +5412,12 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Piercing: 39
+        Piercing: 50
         Blunt: 3
+  - type: APDamageOnHit
+    damage:
+      types:
+        Piercing: 13
   #- type: EmbeddableProjectile
     #offset: 0.15,0.15
   - type: ThrowingAngle
@@ -5480,8 +5484,12 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Piercing: 39
+        Piercing: 50
         Blunt: 3
+  - type: APDamageOnHit
+    damage:
+      types:
+        Piercing: 13
   #- type: EmbeddableProjectile
     #offset: 0.15,0.15
   - type: ThrowingAngle
