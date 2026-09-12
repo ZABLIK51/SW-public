@@ -1,11 +1,11 @@
 using System.Linq;
 using System.Numerics;
-using Content.Client.Examine;
 using Content.Client.Hands.Systems;
 using Content.Client.Message;
 using Content.Client.Popups;
 using Content.Client.Store.Ui;
 using Content.Shared.FixedPoint;
+using Content.Shared.Hands.Components;
 using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
 using Content.Shared.Input;
@@ -23,7 +23,6 @@ using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Map;
 using Robust.Shared.Maths;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Timing;
 
 namespace Content.Client.Imperial.Medieval.Trading;
 
@@ -33,6 +32,8 @@ public sealed partial class TradingMenu : DefaultWindow
     [Dependency] private readonly IPrototypeManager _prototypes = default!;
     [Dependency] private readonly IEntityManager _entities = default!;
 
+    private readonly HandsSystem _hands;
+
     public event Action<Guid>? OnBuy;
     public event Action<Guid>? OnSell;
     public event Action<Guid>? OnBuyOffer;
@@ -40,11 +41,16 @@ public sealed partial class TradingMenu : DefaultWindow
     public event Action<Guid>? OnSelectCommodity;
     public event Action<Guid>? OnSelectOffer;
     public event Action<int>? OnCreateSellOffer;
+    public event Action<int>? OnPrepareUnitSellOffer;
+    public event Action<Guid, int>? OnCreateUnitSellOffers;
     public event Action<Guid, int>? OnCreateBuyOffer;
     public event Action<int>? OnCreateBuyOfferFromHeld;
     public event Action<Guid>? OnCancelOffer;
+    public event Action<Guid, int>? OnCreateBidReceipt;
     public event Action<NetEntity>? OnCollectStoredItem;
+    public event Action<Guid>? OnCollectSaleRevenue;
     public event Action<NetEntity>? OnExamineItem;
+    public event Action<Guid, EntProtoId>? OnExamineCommodity;
     public event Action<int>? OnWithdraw;
 
     private TradingUpdateState? _state;
@@ -55,16 +61,28 @@ public sealed partial class TradingMenu : DefaultWindow
     private bool _updateSelectedPrice = true;
     private CurrencyPrototype? _currency;
     private StoreWithdrawWindow? _withdrawWindow;
+    private TradingUnitSellWindow? _unitSellWindow;
+    private Guid? _unitSellRequest;
+    private TradingBidReceiptWindow? _bidReceiptWindow;
+    private Guid? _bidReceiptOffer;
     private TradingHelpWindow? _helpWindow;
     private bool _management;
     private bool _archive;
     private string? _heldItemName;
+    private bool _trackingHands = true;
     private readonly Dictionary<EntProtoId, EntityUid> _prototypeExamineEntities = new();
 
     public TradingMenu()
     {
         RobustXamlLoader.Load(this);
         IoCManager.InjectDependencies(this);
+
+        _hands = _entities.System<HandsSystem>();
+        _hands.OnPlayerSetActiveHand += OnActiveHandChanged;
+        _hands.OnPlayerItemAdded += OnHeldItemChanged;
+        _hands.OnPlayerItemRemoved += OnHeldItemChanged;
+        _hands.OnPlayerHandsAdded += OnHandsAdded;
+        _hands.OnPlayerHandsRemoved += OnHandsRemoved;
 
         CommonButton.OnPressed += _ => SelectSection(TradingMarketSection.Common);
         UniqueButton.OnPressed += _ => SelectSection(TradingMarketSection.Unique);
@@ -75,6 +93,7 @@ public sealed partial class TradingMenu : DefaultWindow
         WithdrawButton.OnPressed += _ => OpenWithdrawWindow();
         CreateBuyOrderButton.OnPressed += _ => CreateSelectedBuyOrder();
         CreateSellOfferButton.OnPressed += _ => SubmitPrice(HeldPrice.Text, OnCreateSellOffer, true);
+        CreateUnitSellOfferButton.OnPressed += _ => SubmitPrice(HeldPrice.Text, OnPrepareUnitSellOffer, true);
         CreateHeldBuyOrderButton.OnPressed += _ => SubmitPrice(HeldPrice.Text, OnCreateBuyOfferFromHeld);
         OnResized += UpdateColumns;
     }
@@ -82,13 +101,38 @@ public sealed partial class TradingMenu : DefaultWindow
     public void UpdateState(TradingUpdateState state)
     {
         _state = state;
-        if (!state.IsOwner)
+        Title = Loc.GetString(state.IsPublic
+            ? "trading-ui-public-window-title"
+            : "trading-ui-window-title");
+        SearchBar.PlaceHolder = Loc.GetString(state.IsPublic
+            ? "trading-ui-public-search-placeholder"
+            : "trading-ui-market-search-placeholder");
+        MarketOffersTitle.Text = Loc.GetString(state.IsPublic
+            ? "trading-ui-public-market-offers-title"
+            : "trading-ui-market-offers-title");
+        if (state.IsPublic)
+        {
+            _section = TradingMarketSection.Common;
+            _category = null;
+            _management = false;
+            _archive = false;
+            _withdrawWindow?.Close();
+            _unitSellWindow?.Close();
+            _unitSellRequest = null;
+            _bidReceiptWindow?.Close();
+            _bidReceiptOffer = null;
+        }
+        else if (!state.IsOwner)
         {
             _section = TradingMarketSection.Unique;
             _category = null;
             _management = false;
             _archive = false;
             _withdrawWindow?.Close();
+            _unitSellWindow?.Close();
+            _unitSellRequest = null;
+            _bidReceiptWindow?.Close();
+            _bidReceiptOffer = null;
         }
 
         UpdateBalance();
@@ -96,7 +140,10 @@ public sealed partial class TradingMenu : DefaultWindow
 
         var previousSelection = _selected;
         if (_selected == null || state.Items.All(item => item.CommodityId != _selected.Value))
-            _selected = state.Items.FirstOrDefault(item => HasSection(item, _section))?.CommodityId;
+        {
+            _selected = state.Items
+                .FirstOrDefault(item => state.IsPublic || HasSection(item, _section))?.CommodityId;
+        }
 
         if (_selected != previousSelection)
         {
@@ -118,6 +165,8 @@ public sealed partial class TradingMenu : DefaultWindow
         RebuildManagement();
         RebuildArchive();
         UpdateSectionVisibility();
+        UpdateHeldItem();
+        UpdateBidReceiptWindow();
     }
 
     private void SelectSection(TradingMarketSection section)
@@ -155,7 +204,13 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void UpdateSectionVisibility()
     {
-        if (_state is not { IsOwner: true })
+        if (_state is { IsPublic: true })
+        {
+            _section = TradingMarketSection.Common;
+            _management = false;
+            _archive = false;
+        }
+        else if (_state is not { IsOwner: true })
         {
             _section = TradingMarketSection.Unique;
             _management = false;
@@ -167,8 +222,11 @@ public sealed partial class TradingMenu : DefaultWindow
         ManagementView.Visible = _management;
         ArchiveView.Visible = _archive;
         SearchBar.Visible = marketVisible;
-        BalancePanel.Visible = _state?.IsOwner == true;
+        BalancePanel.Visible = _state is { IsOwner: true } or { IsPublic: true };
+        HelpButton.Visible = _state?.IsOwner == true;
+        WithdrawButton.Visible = _state?.IsOwner == true;
         CommonButton.Visible = _state?.IsOwner == true;
+        UniqueButton.Visible = _state?.IsPublic != true;
         ManagementButton.Visible = _state?.IsOwner == true;
         ArchiveButton.Visible = _state?.IsOwner == true;
         OfferCreationPanel.Visible = marketVisible && _state?.IsOwner == true;
@@ -183,8 +241,11 @@ public sealed partial class TradingMenu : DefaultWindow
         if (_state == null)
             return;
 
+        _prototypes.TryIndex(_state.Currency, out _currency);
         var text = _state.Balance.ToString();
-        if (_prototypes.TryIndex(_state.Currency, out _currency))
+        if (_state.IsPublic)
+            text = Loc.GetString("trading-ui-public-balance", ("amount", _state.Balance));
+        else if (_currency != null)
             text = $"{Loc.GetString(_currency.DisplayName, ("amount", _state.Balance))}: {_state.Balance}";
 
         BalanceInfo.SetMarkup(text);
@@ -194,9 +255,18 @@ public sealed partial class TradingMenu : DefaultWindow
     private void RebuildCategories()
     {
         CategoryContainer.DisposeAllChildren();
-        CategoryContainer.Visible = !_management && !_archive && _section == TradingMarketSection.Common;
-        if (_management || _archive || _section != TradingMarketSection.Common || _state == null)
+        CategoryContainer.Visible = !_management &&
+                                    !_archive &&
+                                    _section == TradingMarketSection.Common &&
+                                    _state?.IsPublic != true;
+        if (_management ||
+            _archive ||
+            _section != TradingMarketSection.Common ||
+            _state == null ||
+            _state.IsPublic)
+        {
             return;
+        }
 
         var all = new Button
         {
@@ -245,7 +315,10 @@ public sealed partial class TradingMenu : DefaultWindow
 
         var search = SearchBar.Text.Trim();
         var filtered = _state.Items
-            .Where(item => string.IsNullOrEmpty(search)
+            .Where(item => _state.IsPublic
+                ? string.IsNullOrEmpty(search) ||
+                  item.DisplayName.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                : string.IsNullOrEmpty(search)
                 ? HasSection(item, _section) &&
                   (_section == TradingMarketSection.Unique || _category == null || item.Categories.Contains(_category.Value))
                 : item.DisplayName.Contains(search, StringComparison.CurrentCultureIgnoreCase))
@@ -344,7 +417,7 @@ public sealed partial class TradingMenu : DefaultWindow
         var buy = new Button
         {
             Text = item.LowestSellPrice?.ToString() ?? "—",
-            Disabled = !_state!.IsOwner ||
+            Disabled = (!_state!.IsOwner && !_state.IsPublic) ||
                        item.LowestSellPrice == null ||
                        item.LowestSellPrice > _state.Balance,
             HorizontalExpand = true,
@@ -353,7 +426,7 @@ public sealed partial class TradingMenu : DefaultWindow
         buy.Label.FontColorOverride = Color.White;
         buy.OnPressed += _ => OnBuy?.Invoke(item.CommodityId);
         actions.AddChild(buy);
-        if (HasSection(item, TradingMarketSection.Unique))
+        if (!_state.IsPublic && HasSection(item, TradingMarketSection.Unique))
         {
             var sell = new Button
             {
@@ -419,14 +492,19 @@ public sealed partial class TradingMenu : DefaultWindow
         SelectedPreview.DisposeAllChildren();
         SelectedPreview.AddChild(selectedOffer == null
             ? CreateItemPreview(item, new Vector2(96, 96))
-            : CreateItemPreview(selectedOffer.ProductEntity, selectedOffer.PreviewEntity, new Vector2(96, 96)));
+            : CreateItemPreview(
+                selectedOffer.ProductEntity,
+                selectedOffer.PreviewEntity,
+                new Vector2(96, 96),
+                selectedOffer.CommodityId));
         if (_updateSelectedPrice)
         {
             BuyPrice.Text = (selectedOffer?.Price ?? item.LowestSellPrice)?.ToString() ?? string.Empty;
             _updateSelectedPrice = false;
         }
-        SelectedStats.SetMarkup(
-            Loc.GetString(
+        SelectedStats.SetMarkup(_state.IsPublic
+            ? Loc.GetString("trading-ui-public-offer-count", ("count", item.SellOfferCount))
+            : Loc.GetString(
                 "trading-ui-offer-counts",
                 ("sellCount", item.SellOfferCount),
                 ("buyCount", item.BuyOfferCount)));
@@ -480,7 +558,8 @@ public sealed partial class TradingMenu : DefaultWindow
                 {
                     Text = offer.Price.ToString(),
                     MinWidth = 76,
-                    Disabled = !_state.IsOwner ||
+                    Disabled = (!_state.IsOwner &&
+                                !(_state.IsPublic && offer.Side == TradingOfferSide.Sell)) ||
                                offer.IsOwn ||
                                offer.Side == TradingOfferSide.Sell && offer.Price > _state.Balance,
                     StyleBoxOverride = offer.Side == TradingOfferSide.Sell
@@ -525,6 +604,7 @@ public sealed partial class TradingMenu : DefaultWindow
     private void RebuildManagement()
     {
         ManagedOffersContainer.DisposeAllChildren();
+        PendingSalesContainer.DisposeAllChildren();
         StoredItemsContainer.DisposeAllChildren();
         if (_state == null)
             return;
@@ -540,14 +620,42 @@ public sealed partial class TradingMenu : DefaultWindow
 
         foreach (var offer in ownOffers)
         {
+            var status = Loc.GetString(
+                "trading-ui-managed-offer-status",
+                ("side", GetOfferSideText(offer.Side)),
+                ("price", offer.Price));
+            if (offer.Side == TradingOfferSide.Sell)
+            {
+                status += "\n" + Loc.GetString(
+                    "trading-ui-managed-offer-seller-revenue",
+                    ("amount", Math.Max(0, offer.Price - offer.ReceiptAmount)));
+                if (offer.ReceiptAmount > 0)
+                {
+                    status += "\n" + Loc.GetString(
+                        "trading-ui-managed-offer-receipt-revenue",
+                        ("amount", offer.ReceiptAmount));
+                }
+            }
+
             var row = CreateManagementRow(
                 offer.ProductEntity,
                 offer.PreviewEntity,
+                offer.CommodityId,
                 offer.DisplayName,
-                Loc.GetString(
-                    "trading-ui-managed-offer-status",
-                    ("side", GetOfferSideText(offer.Side)),
-                    ("price", offer.Price)));
+                status);
+            if (offer.Side == TradingOfferSide.Sell)
+            {
+                var available = Math.Max(0, offer.Price - offer.ReceiptAmount);
+                var createReceipt = new Button
+                {
+                    Text = Loc.GetString("trading-ui-create-bid-receipt-button"),
+                    MinWidth = 150,
+                    Disabled = available <= 0,
+                };
+                createReceipt.OnPressed += _ => OpenBidReceiptWindow(offer, available);
+                row.AddChild(createReceipt);
+            }
+
             var cancel = new Button
             {
                 Text = Loc.GetString(offer.Side == TradingOfferSide.Sell
@@ -558,6 +666,68 @@ public sealed partial class TradingMenu : DefaultWindow
             cancel.OnPressed += _ => OnCancelOffer?.Invoke(offer.Id);
             row.AddChild(cancel);
             ManagedOffersContainer.AddChild(row);
+        }
+
+        if (_state.PendingSales.Count == 0)
+        {
+            PendingSalesContainer.AddChild(new Label
+            {
+                Text = Loc.GetString("trading-ui-no-pending-sales"),
+            });
+        }
+
+        foreach (var sale in _state.PendingSales)
+        {
+            var message = Loc.GetString(
+                "trading-ui-pending-sale-entry",
+                ("item", sale.ItemName),
+                ("trader", sale.BuyerName),
+                ("price", sale.Price));
+            var row = new BoxContainer
+            {
+                Orientation = BoxContainer.LayoutOrientation.Horizontal,
+                HorizontalExpand = true,
+                Margin = new Thickness(4),
+            };
+            var labels = new BoxContainer
+            {
+                Orientation = BoxContainer.LayoutOrientation.Vertical,
+                HorizontalExpand = true,
+                VerticalAlignment = VAlignment.Center,
+            };
+            labels.AddChild(new Label
+            {
+                Text = message,
+                ToolTip = message,
+                ClipText = true,
+            });
+            labels.AddChild(new Label
+            {
+                Text = Loc.GetString(
+                    "trading-ui-pending-sale-seller-revenue",
+                    ("amount", sale.SellerRevenue)),
+                StyleClasses = { "LabelSubText" },
+            });
+            if (sale.ReceiptAmount > 0)
+            {
+                labels.AddChild(new Label
+                {
+                    Text = Loc.GetString(
+                        "trading-ui-pending-sale-receipt-revenue",
+                        ("amount", sale.ReceiptAmount)),
+                    StyleClasses = { "LabelSubText" },
+                });
+            }
+
+            row.AddChild(labels);
+            var collect = new Button
+            {
+                Text = Loc.GetString("trading-ui-collect-sale-revenue-button"),
+                MinWidth = 150,
+            };
+            collect.OnPressed += _ => OnCollectSaleRevenue?.Invoke(sale.Id);
+            row.AddChild(collect);
+            PendingSalesContainer.AddChild(row);
         }
 
         if (_state.StoredItems.Count == 0)
@@ -573,6 +743,7 @@ public sealed partial class TradingMenu : DefaultWindow
             var row = CreateManagementRow(
                 stored.ProductEntity,
                 stored.Item,
+                null,
                 stored.DisplayName,
                 Loc.GetString("trading-ui-received-from-order"));
             var collect = new Button
@@ -618,6 +789,7 @@ public sealed partial class TradingMenu : DefaultWindow
     private BoxContainer CreateManagementRow(
         EntProtoId product,
         NetEntity? preview,
+        Guid? commodityId,
         string displayName,
         string status)
     {
@@ -627,7 +799,7 @@ public sealed partial class TradingMenu : DefaultWindow
             HorizontalExpand = true,
             Margin = new Thickness(4),
         };
-        row.AddChild(CreateItemPreview(product, preview, new Vector2(54, 54)));
+        row.AddChild(CreateItemPreview(product, preview, new Vector2(54, 54), commodityId));
         var labels = new BoxContainer
         {
             Orientation = BoxContainer.LayoutOrientation.Vertical,
@@ -666,10 +838,14 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private Control CreateItemPreview(TradingMarketItemState item, Vector2 size)
     {
-        return CreateItemPreview(item.ProductEntity, item.PreviewEntity, size);
+        return CreateItemPreview(item.ProductEntity, item.PreviewEntity, size, item.CommodityId);
     }
 
-    private Control CreateItemPreview(EntProtoId product, NetEntity? preview, Vector2 size)
+    private Control CreateItemPreview(
+        EntProtoId product,
+        NetEntity? preview,
+        Vector2 size,
+        Guid? commodityId)
     {
         if (preview is { } netEntity)
         {
@@ -711,7 +887,8 @@ public sealed partial class TradingMenu : DefaultWindow
                 if (args.Function != ContentKeyFunctions.ExamineEntity)
                     return;
 
-                ExamineProduct(product);
+                if (commodityId is { } id)
+                    OnExamineCommodity?.Invoke(id, product);
                 args.Handle();
             };
             return icon;
@@ -724,13 +901,7 @@ public sealed partial class TradingMenu : DefaultWindow
         };
     }
 
-    private void ExamineProduct(EntProtoId product)
-    {
-        var entity = GetPrototypeExamineEntity(product);
-        _entities.System<ExamineSystem>().DoExamine(entity);
-    }
-
-    private EntityUid GetPrototypeExamineEntity(EntProtoId product)
+    public EntityUid GetPrototypeExamineEntity(EntProtoId product)
     {
         if (_prototypeExamineEntities.TryGetValue(product, out var entity) &&
             _entities.EntityExists(entity))
@@ -748,9 +919,23 @@ public sealed partial class TradingMenu : DefaultWindow
         return (item.Sections & section) != 0;
     }
 
-    protected override void FrameUpdate(FrameEventArgs args)
+    private void OnActiveHandChanged(string? _)
     {
-        base.FrameUpdate(args);
+        UpdateHeldItem();
+    }
+
+    private void OnHeldItemChanged(string _, EntityUid __)
+    {
+        UpdateHeldItem();
+    }
+
+    private void OnHandsAdded(Entity<HandsComponent> _)
+    {
+        UpdateHeldItem();
+    }
+
+    private void OnHandsRemoved()
+    {
         UpdateHeldItem();
     }
 
@@ -759,7 +944,7 @@ public sealed partial class TradingMenu : DefaultWindow
         var itemName = "—";
         var canOffer = false;
         if (_state is { IsOwner: true } &&
-            _entities.System<HandsSystem>().GetActiveHandEntity() is { } held &&
+            _hands.GetActiveHandEntity() is { } held &&
             _entities.EntityExists(held) &&
             !_entities.HasComponent<VirtualItemComponent>(held) &&
             _entities.TryGetComponent<MetaDataComponent>(held, out var metadata))
@@ -787,7 +972,77 @@ public sealed partial class TradingMenu : DefaultWindow
     private void UpdateHeldItemAvailability(bool canOffer)
     {
         CreateSellOfferButton.Disabled = !canOffer;
+        CreateUnitSellOfferButton.Disabled = !canOffer;
         CreateHeldBuyOrderButton.Disabled = !canOffer;
+    }
+
+    public void OpenUnitSellWindow(TradingUnitSellOfferPreparedMessage message)
+    {
+        if (_state is not { IsOwner: true })
+            return;
+
+        _unitSellWindow?.Close();
+        _unitSellRequest = message.RequestId;
+        _unitSellWindow = new TradingUnitSellWindow(
+            message.ItemName,
+            message.Price,
+            message.MaximumAmount);
+        _unitSellWindow.OnConfirm += amount =>
+        {
+            if (_unitSellRequest is not { } requestId)
+                return;
+
+            _unitSellRequest = null;
+            OnCreateUnitSellOffers?.Invoke(requestId, amount);
+        };
+        _unitSellWindow.OpenCentered();
+    }
+
+    private void OpenBidReceiptWindow(TradingMarketOfferState offer, int maximumAmount)
+    {
+        if (_state is not { IsOwner: true } || maximumAmount <= 0)
+            return;
+
+        if (_bidReceiptWindow is { IsOpen: true } && _bidReceiptOffer == offer.Id)
+        {
+            _bidReceiptWindow.SetMaximumAmount(maximumAmount);
+            _bidReceiptWindow.MoveToFront();
+            return;
+        }
+
+        _bidReceiptWindow?.Close();
+        _bidReceiptOffer = offer.Id;
+        _bidReceiptWindow = new TradingBidReceiptWindow(maximumAmount);
+        _bidReceiptWindow.OnConfirm += amount =>
+        {
+            if (_bidReceiptOffer is not { } offerId)
+                return;
+
+            _bidReceiptOffer = null;
+            OnCreateBidReceipt?.Invoke(offerId, amount);
+        };
+        _bidReceiptWindow.OpenCentered();
+    }
+
+    private void UpdateBidReceiptWindow()
+    {
+        if (_bidReceiptWindow is not { IsOpen: true } ||
+            _state is not { IsOwner: true } ||
+            _bidReceiptOffer is not { } offerId)
+        {
+            return;
+        }
+
+        var offer = _state.Offers.FirstOrDefault(candidate => candidate.Id == offerId);
+        var maximumAmount = offer == null ? 0 : Math.Max(0, offer.Price - offer.ReceiptAmount);
+        if (offer == null || offer.Side != TradingOfferSide.Sell || maximumAmount <= 0)
+        {
+            _bidReceiptWindow.Close();
+            _bidReceiptOffer = null;
+            return;
+        }
+
+        _bidReceiptWindow.SetMaximumAmount(maximumAmount);
     }
 
     private void OpenWithdrawWindow()
@@ -836,8 +1091,12 @@ public sealed partial class TradingMenu : DefaultWindow
 
     public override void Close()
     {
+        StopTrackingHands();
+
         base.Close();
         _withdrawWindow?.Close();
+        _unitSellWindow?.Close();
+        _bidReceiptWindow?.Close();
         _helpWindow?.Close();
 
         foreach (var entity in _prototypeExamineEntities.Values)
@@ -847,5 +1106,18 @@ public sealed partial class TradingMenu : DefaultWindow
         }
 
         _prototypeExamineEntities.Clear();
+    }
+
+    public void StopTrackingHands()
+    {
+        if (!_trackingHands)
+            return;
+
+        _trackingHands = false;
+        _hands.OnPlayerSetActiveHand -= OnActiveHandChanged;
+        _hands.OnPlayerItemAdded -= OnHeldItemChanged;
+        _hands.OnPlayerItemRemoved -= OnHeldItemChanged;
+        _hands.OnPlayerHandsAdded -= OnHandsAdded;
+        _hands.OnPlayerHandsRemoved -= OnHandsRemoved;
     }
 }

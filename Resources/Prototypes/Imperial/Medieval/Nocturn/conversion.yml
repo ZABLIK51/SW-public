@@ -3,6 +3,9 @@
   name: Turn into a nocturne
   description: Turn a human into a young nocturne.
   components:
+  - type: NocturnBloodDrainSpell
+    bloodDrain: 0
+    bloodDrainFraction: 0.5
   - type: Action
     itemIconStyle: BigAction
     icon:
@@ -17,15 +20,3 @@
   - type: EntityTargetAction
     canTargetSelf: false
     event: !type:AncientNocturneConversionActionEvent
-
-- type: polymorph
-  id: MedievalAncientNocturneConversionPolymorph
-  configuration:
-    entity: MobDrou
-    forced: true
-    transferName: true
-    transferDamage: true
-    inventory: Transfer
-    revertOnCrit: false
-    revertOnDeath: false
-    revertOnDelete: false

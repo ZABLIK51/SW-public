@@ -577,6 +577,8 @@
   - type: StaminaStunArmor
     multiplier: 1
     flatReduction: 2
+  - type: ManaRegen
+    regen: -2
   - type: QuestItem
     contractName: "любая пластинчатая или прочная железная броня"
   # Imperial Medieval End

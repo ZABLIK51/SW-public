@@ -123,7 +123,7 @@
     thresholds:
     - trigger:
         !type:DamageTrigger
-        damage: 500
+        damage: 400
       behaviors:
       - !type:DoActsBehavior
         acts: ["Destruction"]
@@ -160,7 +160,7 @@
     thresholds:
     - trigger:
         !type:DamageTrigger
-        damage: 400
+        damage: 250
       behaviors:
       - !type:DoActsBehavior
         acts: [ "Destruction" ]
@@ -194,7 +194,7 @@
     thresholds:
     - trigger:
         !type:DamageTrigger
-        damage: 1600
+        damage: 900
       behaviors:
       - !type:DoActsBehavior
         acts: [ "Destruction" ]
@@ -502,7 +502,7 @@
   - type: IgnoreSpiderWeb
   - type: Bloodstream
     bloodReagent: CopperBlood
-    bloodMaxVolume: 100
+    bloodMaxVolume: 200
   - type: Puller
   - type: Appearance
   - type: Speech
@@ -623,7 +623,7 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 8
+        Brute: 11
       types:
         ParryAble: 1
         Structural: 85
@@ -632,6 +632,12 @@
       0: Alive
       65: Critical
       140: Dead
+  - type: Stamina
+    critThreshold: 120 
+    stunTime: 5
+    cooldown: 2.5
+    decay: 3.5
+    afterCritDecayMultiplier: 5
   - type: MovementSpeedModifier
     baseWalkSpeed: 3.2
     baseSprintSpeed: 2
@@ -690,9 +696,10 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 7
+        Brute: 12
       types:
         ParryAble: 1
+        Structural: 10
   - type: Gun
     fireRate: 0.75
     useKey: false
@@ -705,6 +712,12 @@
       0: Alive
       100: Critical
       170: Dead
+  - type: Stamina
+    critThreshold: 115
+    stunTime: 5
+    cooldown: 2.5
+    decay: 3.5
+    afterCritDecayMultiplier: 5
   - type: MovementSpeedModifier
     baseWalkSpeed: 3.4
     baseSprintSpeed: 2.2
@@ -744,9 +757,9 @@
   - type: Projectile
     damage:
       types:
-        Caustic: 2.0
-        Blunt: 3.0
-
+        Caustic: 7.0
+        Blunt: 6.0
+        Structural: 10
 - type: entity
   name: myrmalisk
   parent: MedievalMyrmexBase
@@ -770,14 +783,21 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 22
+        Brute: 26
       types:
         ParryAble: 1
+        Structural: 10
   - type: MobThresholds
     thresholds:
       0: Alive
       310: Critical # curse of 220. no. 310.
       450: Dead
+  - type: Stamina
+    critThreshold: 160
+    stunTime: 4
+    cooldown: 2.5
+    decay: 4
+    afterCritDecayMultiplier: 5
   - type: MovementSpeedModifier
     baseWalkSpeed: 3
     baseSprintSpeed: 1.8
@@ -832,14 +852,21 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 14
+        Brute: 18
       types:
         ParryAble: 1
+        Structural: 10
   - type: MobThresholds
     thresholds:
       0: Alive
       155: Critical
       270: Dead
+  - type: Stamina
+    critThreshold: 140
+    stunTime: 5
+    cooldown: 2.5
+    decay: 4
+    afterCritDecayMultiplier: 5
   - type: MovementSpeedModifier
     baseWalkSpeed: 4.2
     baseSprintSpeed: 2.7
@@ -878,6 +905,10 @@
   id: MedievalMyrmexLarva
   components:
   - type: Larva
+  - type: Myrmex #imperial medieval - larvae count as myrmex for traps, friendly fire and other checks
+    actions: []
+  - type: MyrmexHunger
+    eatCooldownSeconds: 80
   - type: Butcherable
     spawned:
     - id: FoodMeat
@@ -982,8 +1013,8 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 28
-        Airloss: 1
+        Brute: 30
+        Airloss: 2
       types:
         ParryAble: 1
         Bloodloss: 2
@@ -993,6 +1024,12 @@
       0: Alive
       750: Critical
       900: Dead
+  - type: Stamina
+    critThreshold: 200
+    stunTime: 3
+    cooldown: 2.5
+    decay: 4
+    afterCritDecayMultiplier: 5
   - type: MovementSpeedModifier
     baseWalkSpeed: 3
     baseSprintSpeed: 2.2

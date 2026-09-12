@@ -60,7 +60,7 @@
     icon: Imperial/Medieval/Myrmex/Icons/wall.png
     priority: -12
     checkCanAccess: false
-    useDelay: 18
+    useDelay: 8
   - type: InstantAction
     event: !type:ActionMyrmexSpawnEvent
       proto: MedievalMyrmexFlimsyWall
