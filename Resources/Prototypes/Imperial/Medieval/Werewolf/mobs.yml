@@ -44,9 +44,13 @@
     animation: WeaponArcBite
     damage:
       groups:
-        Brute: 18
+        Brute: 15
       types:
-        ParryAble: 0.5
+        ParryAble: 1
+  - type: APDamageOnHit
+    damage:
+      types:
+      slash: 2
   - type: Puller
   - type: Tag
     tags:
